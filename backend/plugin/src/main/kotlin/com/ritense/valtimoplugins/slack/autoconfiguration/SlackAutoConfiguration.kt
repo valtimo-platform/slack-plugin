@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.autoconfiguration
+package com.ritense.valtimoplugins.slack.autoconfiguration
 
 import com.ritense.plugin.service.PluginService
 import com.ritense.resource.service.TemporaryResourceStorageService
-import com.ritense.valtimo.slack.client.SlackClient
-import com.ritense.valtimo.slack.plugin.SlackPluginFactory
+import com.ritense.valtimoplugins.slack.client.SlackClient
+import com.ritense.valtimoplugins.slack.plugin.SlackPluginFactory
 import io.netty.handler.logging.LogLevel
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean

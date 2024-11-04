@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.plugin
+package com.ritense.valtimoplugins.slack.plugin
 
 import com.ritense.plugin.PluginFactory
 import com.ritense.plugin.service.PluginService
 import com.ritense.resource.service.TemporaryResourceStorageService
 import com.ritense.valtimo.contract.annotation.SkipComponentScan
-import com.ritense.valtimo.slack.client.SlackClient
+import com.ritense.valtimoplugins.slack.client.SlackClient
 import org.springframework.stereotype.Component
 
 @Component

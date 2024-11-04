@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.plugin
+package com.ritense.valtimoplugins.slack
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.ritense.authorization.AuthorizationContext.Companion.runWithoutAuthorization
@@ -26,7 +26,6 @@ import com.ritense.processdocument.domain.impl.request.NewDocumentAndStartProces
 import com.ritense.processdocument.service.ProcessDocumentService
 import com.ritense.processlink.domain.ActivityTypeWithEventName.SERVICE_TASK_START
 import com.ritense.resource.service.TemporaryResourceStorageService
-import com.ritense.valtimo.slack.BaseIntegrationTest
 import com.ritense.valtimo.contract.json.MapperSingleton
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.client
+package com.ritense.valtimoplugins.slack.client
 
 data class SlackResponse(
     val ok: Boolean,

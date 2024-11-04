@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack
+package com.ritense.valtimoplugins.slack
 
 abstract class BaseTest {
 

@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.client
+package com.ritense.valtimoplugins.slack
 
-class SlackException(
-    message: String?
-) : RuntimeException(message)
+import com.ritense.valtimo.contract.config.LiquibaseRunnerAutoConfiguration
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+
+@SpringBootApplication(
+    scanBasePackageClasses = [LiquibaseRunnerAutoConfiguration::class]
+)
+class TestApplication {
+
+    fun main(args: Array<String>) {
+        runApplication<TestApplication>(*args)
+    }
+}

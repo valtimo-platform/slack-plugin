@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritense.valtimo.slack.client
+package com.ritense.valtimoplugins.slack.client
 
 import com.ritense.valtimo.contract.annotation.SkipComponentScan
 import java.io.InputStream
