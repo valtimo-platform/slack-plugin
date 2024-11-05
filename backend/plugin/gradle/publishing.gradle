@@ -24,7 +24,7 @@ pluginManager.withPlugin("maven-publish") {
 
                 pom {
                     name = "Slack plugin module"
-                    description = "The slack plugin module contains a plugin for sending slack messages"
+                    description = "A plugin for sending slack messages"
                     developers {
                         developer {
                             id = "team-valtimo"
