@@ -25,11 +25,11 @@ The following Gradle dependency can be added to your `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.ritense.valtimoplugins:slack:5.0.1")
+    implementation("com.ritense.valtimoplugins:slack:5.0.0")
 }
 ```
 
-The most recent version can be found in [plugin.properties](plugin.properties).
+The most recent version can be found [here](https://mvnrepository.com/artifact/com.ritense.valtimoplugins/slack).
 
 ## Frontend
 
@@ -43,7 +43,7 @@ The following dependency can be added to your `package.json` file:
 }
 ```
 
-The most recent version can be found in [package.json](../../frontend/projects/valtimo-plugins/slack/package.json).
+The most recent version can be found [here](https://www.npmjs.com/package/@valtimo-plugins/slack?activeTab=versions).
 
 In order to use the plugin in the frontend, the following must be added to your `app.module.ts`:
 
