@@ -1,71 +1,68 @@
-# Plugin Documentation
+# Slack plugin
 
-<!-- Use this page to document your plugin. Below is a suggested structure. -->
+For sending messages to Slack.
 
-## Overview
+## Capabilities
 
-This is a sample plugin demonstrating an API call action. It fetches data from a time API endpoint.
+This Slack plugin has two actions:
 
-## Dependencies
+1. Send message to Slack channel.
+2. Send message to Slack channel with attachment.
 
-### Backend
+# Requirements
+
+Before you can use the Slack Plugin, you need to:
+
+- Create a Slack-app that will post the messages. A `@Valtimo messenger`
+    - This app must have premissions `chat:write` and `files:write`
+- Add the `@Valtimo messenger` to the channel.
+
+# Dependencies
+
+## Backend
+
+The following Gradle dependency can be added to your `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.ritense.valtimoplugins:sample-plugin:0.0.1")
+    implementation("com.ritense.valtimoplugins:slack:5.0.0")
 }
 ```
 
-### Frontend
+The most recent version can be found [here](https://mvnrepository.com/artifact/com.ritense.valtimoplugins/slack).
+
+## Frontend
+
+The following dependency can be added to your `package.json` file:
 
 ```json
 {
   "dependencies": {
-    "@valtimo-plugins/sample-plugin": "0.0.1"
+    "@valtimo-plugins/slack": "5.0.1"
   }
 }
 ```
 
-In your `app.module.ts`:
+The most recent version can be found [here](https://www.npmjs.com/package/@valtimo-plugins/slack?activeTab=versions).
+
+In order to use the plugin in the frontend, the following must be added to your `app.module.ts`:
 
 ```typescript
 import {
-    SamplePluginModule, samplePluginSpecification,
-} from '@valtimo-plugins/sample-plugin';
+    SlackPluginModule, slackPluginSpecification
+} from '@valtimo-plugins/slack';
 
 @NgModule({
     imports: [
-        SamplePluginModule,
+        SlackPluginModule,
     ],
     providers: [
         {
             provide: PLUGIN_TOKEN,
             useValue: [
-                samplePluginSpecification,
+                slackPluginSpecification,
             ]
         }
     ]
 })
 ```
-
-## Configuration
-
-List the plugin configuration properties and how to set them.
-
-| Property | Type   | Required | Description                          |
-|----------|--------|----------|--------------------------------------|
-| apiUrl   | string | Yes      | The URL of the time API to call      |
-
-## Actions
-
-### Time API test action
-
-Sends a GET request to the configured API URL and returns the timezone response.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-|           |      |          |             |
-
-## Usage
-
-Explain how to use the plugin in a process, with examples if applicable.
