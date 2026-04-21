@@ -147,7 +147,7 @@
                 }
             }
         },
-        "@valtimo-plugins/sample-plugin": {
+        "@valtimo-plugins/slack": {
             "projectType": "library",
             "root": "projects/plugin",
             "sourceRoot": "projects/plugin/src",
