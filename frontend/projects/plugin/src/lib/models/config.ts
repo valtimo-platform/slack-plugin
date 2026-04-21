@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-/*
- * Public API Surface of slack
- */
+import {PluginConfigurationData} from '@valtimo/plugin';
 
-export * from './lib/models';
-export * from './lib/slack-plugin-module';
-export * from './lib/slack-plugin.specification';
-export * from './lib/components/slack-configuration/slack-configuration.component';
-export * from './lib/components/post-message/post-message-configuration.component';
-export * from './lib/components/post-message-with-file/post-message-with-file-configuration.component';
+interface SlackConfig extends PluginConfigurationData {
+  url: string;
+  token: string;
+}
+
+interface PostMessageConfig {
+  channel: string;
+  message: string;
+}
+
+interface PostMessageWithFileConfig {
+  channels: string;
+  message?: string;
+  fileName?: string;
+}
+
+export {SlackConfig, PostMessageConfig, PostMessageWithFileConfig};

@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * Public API Surface of slack
- */
+package com.ritense.valtimoplugins.slack.client
 
-export * from './lib/models';
-export * from './lib/slack-plugin-module';
-export * from './lib/slack-plugin.specification';
-export * from './lib/components/slack-configuration/slack-configuration.component';
-export * from './lib/components/post-message/post-message-configuration.component';
-export * from './lib/components/post-message-with-file/post-message-with-file-configuration.component';
+data class SlackResponse(
+    val ok: Boolean,
+    val error: String? = null
+)

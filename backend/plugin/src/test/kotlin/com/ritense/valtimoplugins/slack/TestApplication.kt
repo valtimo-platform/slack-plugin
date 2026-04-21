@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Public API Surface of slack
- */
+package com.ritense.valtimoplugins.slack
 
-export * from './lib/models';
-export * from './lib/slack-plugin-module';
-export * from './lib/slack-plugin.specification';
-export * from './lib/components/slack-configuration/slack-configuration.component';
-export * from './lib/components/post-message/post-message-configuration.component';
-export * from './lib/components/post-message-with-file/post-message-with-file-configuration.component';
+import com.ritense.valtimo.contract.config.LiquibaseRunnerAutoConfiguration
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+
+@SpringBootApplication(
+    scanBasePackageClasses = [LiquibaseRunnerAutoConfiguration::class]
+)
+class TestApplication {
+
+    fun main(args: Array<String>) {
+        runApplication<TestApplication>(*args)
+    }
+}

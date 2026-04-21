@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Public API Surface of slack
- */
+package com.ritense.valtimoplugins.slack
 
-export * from './lib/models';
-export * from './lib/slack-plugin-module';
-export * from './lib/slack-plugin.specification';
-export * from './lib/components/slack-configuration/slack-configuration.component';
-export * from './lib/components/post-message/post-message-configuration.component';
-export * from './lib/components/post-message-with-file/post-message-with-file-configuration.component';
+abstract class BaseTest {
+
+    fun readFileAsString(fileName: String): String = this::class.java.getResource(fileName)!!.readText(Charsets.UTF_8)
+
+}
