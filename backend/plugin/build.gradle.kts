@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+val kotlinLoggingVersion: String by project
+val mockitoKotlinVersion: String by project
+
 dockerCompose {
     setProjectName("slack")
     isRequiredBy(project.tasks.integrationTesting)
@@ -31,7 +34,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    implementation("io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion")
 
     // Testing
     testImplementation("com.ritense.valtimo:document")
@@ -44,7 +47,7 @@ dependencies {
 
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.hamcrest:hamcrest-library")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
 
     testImplementation("org.postgresql:postgresql")
 
