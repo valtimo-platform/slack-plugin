@@ -15,6 +15,7 @@
  */
 
 val kotlinLoggingVersion: String by project
+val okhttpVersion: String by project
 val mockitoKotlinVersion: String by project
 
 dockerCompose {
@@ -37,7 +38,14 @@ dependencies {
     compileOnly("io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion")
 
     // Testing
-    testImplementation("com.ritense.valtimo:document")
+    testImplementation("com.ritense.valtimo:core")
+    testImplementation("com.ritense.valtimo:plugin-valtimo")
+    testImplementation("com.ritense.valtimo:temporary-resource-storage")
+    testImplementation("com.ritense.valtimo:value-resolver")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    testImplementation("com.ritense.valtimo:case")
     testImplementation("com.ritense.valtimo:local-resource")
     testImplementation("com.ritense.valtimo:process-document")
     testImplementation("com.ritense.valtimo:test-utils-common")
@@ -51,12 +59,11 @@ dependencies {
 
     testImplementation("org.postgresql:postgresql")
 
-    testImplementation("com.squareup.okhttp3:mockwebserver")
-    testImplementation("com.squareup.okhttp3:okhttp")
+    testImplementation("com.squareup.okhttp3:mockwebserver:$okhttpVersion")
+    testImplementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-
 }
 
 apply(from = "gradle/publishing.gradle")

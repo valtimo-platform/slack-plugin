@@ -17,5 +17,5 @@
 package com.ritense.valtimoplugins.slack.client
 
 class SlackException(
-    message: String?
+    message: String?,
 ) : RuntimeException(message)

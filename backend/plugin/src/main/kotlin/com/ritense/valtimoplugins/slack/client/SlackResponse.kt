@@ -18,5 +18,5 @@ package com.ritense.valtimoplugins.slack.client
 
 data class SlackResponse(
     val ok: Boolean,
-    val error: String? = null
+    val error: String? = null,
 )

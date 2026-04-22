@@ -21,10 +21,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication(
-    scanBasePackageClasses = [LiquibaseRunnerAutoConfiguration::class]
+    scanBasePackageClasses = [LiquibaseRunnerAutoConfiguration::class],
 )
 class TestApplication {
-
     fun main(args: Array<String>) {
         runApplication<TestApplication>(*args)
     }

@@ -24,19 +24,18 @@ import com.ritense.processlink.domain.ActivityTypeWithEventName
 import com.ritense.resource.domain.MetadataType
 import com.ritense.resource.service.TemporaryResourceStorageService
 import com.ritense.valtimoplugins.slack.client.SlackClient
-import java.net.URI
 import org.operaton.bpm.engine.delegate.DelegateExecution
+import java.net.URI
 
 @Plugin(
     key = "slack",
     title = "Slack Plugin",
-    description = "Post message with the Slack plugin"
+    description = "Post message with the Slack plugin",
 )
 open class SlackPlugin(
     private val slackClient: SlackClient,
     private val storageService: TemporaryResourceStorageService,
 ) {
-
     @PluginProperty(key = "url", secret = false)
     lateinit var url: URI
 
@@ -47,12 +46,12 @@ open class SlackPlugin(
         key = "post-message",
         title = "Post message",
         description = "Sends a message to a Slack channel",
-        activityTypes = [ActivityTypeWithEventName.SERVICE_TASK_START]
+        activityTypes = [ActivityTypeWithEventName.SERVICE_TASK_START],
     )
     open fun postMessage(
         execution: DelegateExecution,
         @PluginActionProperty channel: String,
-        @PluginActionProperty message: String
+        @PluginActionProperty message: String,
     ) {
         slackClient.baseUri = url
         slackClient.token = token
@@ -66,7 +65,7 @@ open class SlackPlugin(
         key = "post-message-with-file",
         title = "Post message with file",
         description = "Sends a message to a channel with a file",
-        activityTypes = [ActivityTypeWithEventName.SERVICE_TASK_START]
+        activityTypes = [ActivityTypeWithEventName.SERVICE_TASK_START],
     )
     open fun postMessageWithFile(
         execution: DelegateExecution,
@@ -74,8 +73,11 @@ open class SlackPlugin(
         @PluginActionProperty message: String?,
         @PluginActionProperty fileName: String?,
     ) {
-        val resourceId = execution.getVariable(RESOURCE_ID_PROCESS_VAR) as String?
-            ?: throw IllegalStateException("Failed to post slack message. No process variable '$RESOURCE_ID_PROCESS_VAR' found.")
+        val resourceId =
+            execution.getVariable(RESOURCE_ID_PROCESS_VAR) as String?
+                ?: throw IllegalStateException(
+                    "Failed to post slack message. No process variable '$RESOURCE_ID_PROCESS_VAR' found.",
+                )
         val contentAsInputStream = storageService.getResourceContentAsInputStream(resourceId)
         val metadata = storageService.getResourceMetadata(resourceId)
 
@@ -85,7 +87,7 @@ open class SlackPlugin(
             channels = channels,
             message = message,
             fileName = fileName ?: metadata[MetadataType.FILE_NAME.key] as String,
-            file = contentAsInputStream
+            file = contentAsInputStream,
         )
     }
 

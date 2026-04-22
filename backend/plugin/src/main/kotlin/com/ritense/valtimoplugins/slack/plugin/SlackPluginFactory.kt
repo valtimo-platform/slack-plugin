@@ -30,8 +30,5 @@ class SlackPluginFactory(
     val client: SlackClient,
     val storageService: TemporaryResourceStorageService,
 ) : PluginFactory<SlackPlugin>(pluginService) {
-
-    override fun create(): SlackPlugin {
-        return SlackPlugin(client, storageService)
-    }
+    override fun create(): SlackPlugin = SlackPlugin(client, storageService)
 }

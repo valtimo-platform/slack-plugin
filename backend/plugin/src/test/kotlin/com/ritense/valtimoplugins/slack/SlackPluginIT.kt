@@ -32,10 +32,10 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.assertj.core.api.Assertions.assertThat
-import org.operaton.bpm.engine.RepositoryService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.operaton.bpm.engine.RepositoryService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.transaction.annotation.Transactional
@@ -43,7 +43,6 @@ import kotlin.test.fail
 
 @Transactional
 class SlackPluginIT : BaseIntegrationTest() {
-
     @Autowired
     lateinit var processDocumentService: ProcessDocumentService
 
@@ -74,11 +73,12 @@ class SlackPluginIT : BaseIntegrationTest() {
     @Test
     fun `should post message`() {
         createProcessLink(
-            "post-message", """
+            "post-message",
+            """
             {
                 "channel": "AAAAA1111",
                 "message": "Hello world!"
-            }"""
+            }""",
         )
 
         // when
@@ -93,11 +93,12 @@ class SlackPluginIT : BaseIntegrationTest() {
     @Test
     fun `should post message with process variable`() {
         createProcessLink(
-            "post-message", """
+            "post-message",
+            """
             {
                 "channel": "AAAAA1111",
                 "message": "pv:myProcessVariable"
-            }"""
+            }""",
         )
         val processVars = mapOf("myProcessVariable" to "Hello resolved world!")
 
@@ -112,12 +113,13 @@ class SlackPluginIT : BaseIntegrationTest() {
     @Test
     fun `should post message with file`() {
         createProcessLink(
-            "post-message-with-file", """
+            "post-message-with-file",
+            """
             {
                 "channels": "AAAAA1111",
                 "message": "Hello world!",
                 "fileName": "tree.png"
-            }"""
+            }""",
         )
         val resourceId = temporaryResourceStorageService.store("-tree-png-bytes-".byteInputStream())
         val processVars = mapOf("resourceId" to resourceId)
@@ -135,32 +137,40 @@ class SlackPluginIT : BaseIntegrationTest() {
 
     fun startMockServer() {
         executedRequests = mutableListOf()
-        val dispatcher: Dispatcher = object : Dispatcher() {
-            @Throws(InterruptedException::class)
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                executedRequests.add(request)
-                val response = when (request.method + " " + request.path?.substringBefore('?')) {
-                    "POST /api/chat.postMessage" -> mockResponseFromFile("/data/chat-post-message-response.json")
-                    "POST /api/files.upload" -> mockResponseFromFile("/data/files-upload-response.json")
-                    else -> MockResponse().setResponseCode(404)
+        val dispatcher: Dispatcher =
+            object : Dispatcher() {
+                @Throws(InterruptedException::class)
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    executedRequests.add(request)
+                    val response =
+                        when (request.method + " " + request.path?.substringBefore('?')) {
+                            "POST /api/chat.postMessage" ->
+                                mockResponseFromFile(
+                                    "/data/chat-post-message-response.json",
+                                )
+                            "POST /api/files.upload" -> mockResponseFromFile("/data/files-upload-response.json")
+                            else -> MockResponse().setResponseCode(404)
+                        }
+                    return response
                 }
-                return response
             }
-        }
         server = MockWebServer()
         server.dispatcher = dispatcher
         server.start()
     }
 
-    fun findRequest(method: HttpMethod, path: String): RecordedRequest? {
-        return executedRequests
+    fun findRequest(
+        method: HttpMethod,
+        path: String,
+    ): RecordedRequest? =
+        executedRequests
             .filter { method.matches(it.method!!) }
             .firstOrNull { it.path?.substringBefore('?').equals(path) }
-    }
 
-    fun getRequest(method: HttpMethod, path: String): RecordedRequest {
-        return findRequest(method, path) ?: fail("Request with method $method and path $path was not sent")
-    }
+    fun getRequest(
+        method: HttpMethod,
+        path: String,
+    ): RecordedRequest = findRequest(method, path) ?: fail("Request with method $method and path $path was not sent")
 
     private fun createSlackPluginConfiguration(): PluginConfiguration {
         val slackConfigurationProperties = """
@@ -172,15 +182,20 @@ class SlackPluginIT : BaseIntegrationTest() {
         return pluginService.createPluginConfiguration(
             "Slack plugin configuration",
             MapperSingleton.get().readTree(slackConfigurationProperties) as ObjectNode,
-            "slack"
+            "slack",
         )
     }
 
-    private fun createProcessLink(actionDefinitionKey: String, actionProperties: String) {
-        val processDefinition = repositoryService.createProcessDefinitionQuery()
-            .processDefinitionKey(PROCESS_DEFINITION_KEY)
-            .latestVersion()
-            .singleResult()
+    private fun createProcessLink(
+        actionDefinitionKey: String,
+        actionProperties: String,
+    ) {
+        val processDefinition =
+            repositoryService
+                .createProcessDefinitionQuery()
+                .processDefinitionKey(PROCESS_DEFINITION_KEY)
+                .latestVersion()
+                .singleResult()
 
         pluginService.createProcessLink(
             PluginProcessLinkCreateDto(
@@ -190,7 +205,7 @@ class SlackPluginIT : BaseIntegrationTest() {
                 actionDefinitionKey,
                 MapperSingleton.get().readTree(actionProperties) as ObjectNode,
                 SERVICE_TASK_START,
-            )
+            ),
         )
     }
 
@@ -200,13 +215,16 @@ class SlackPluginIT : BaseIntegrationTest() {
                 "lastname": "Doe"
             }
         """
-        val request = NewDocumentAndStartProcessRequest(
-            PROCESS_DEFINITION_KEY,
-            NewDocumentRequest(
-                DOCUMENT_DEFINITION_KEY,
-                MapperSingleton.get().readTree(documentContent)
+        val request =
+            NewDocumentAndStartProcessRequest(
+                PROCESS_DEFINITION_KEY,
+                NewDocumentRequest(
+                    DOCUMENT_DEFINITION_KEY,
+                    DOCUMENT_DEFINITION_KEY,
+                    "1.0.0",
+                    MapperSingleton.get().readTree(documentContent),
+                ),
             )
-        )
         request.withProcessVars(processVars)
         val result = runWithoutAuthorization { processDocumentService.newDocumentAndStartProcess(request) }
         if (result.errors().isNotEmpty()) {
@@ -214,16 +232,14 @@ class SlackPluginIT : BaseIntegrationTest() {
         }
     }
 
-    private fun mockResponseFromFile(fileName: String): MockResponse {
-        return MockResponse()
+    private fun mockResponseFromFile(fileName: String): MockResponse =
+        MockResponse()
             .addHeader("Content-Type", "application/json; charset=utf-8")
             .setResponseCode(200)
             .setBody(readFileAsString(fileName))
-    }
 
     companion object {
         private const val PROCESS_DEFINITION_KEY = "ServiceTaskProcess"
         private const val DOCUMENT_DEFINITION_KEY = "profile"
     }
-
 }

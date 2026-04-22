@@ -20,26 +20,16 @@ import com.ritense.plugin.service.PluginService
 import com.ritense.resource.service.TemporaryResourceStorageService
 import com.ritense.valtimoplugins.slack.client.SlackClient
 import com.ritense.valtimoplugins.slack.plugin.SlackPluginFactory
-import io.netty.handler.logging.LogLevel
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.client.RestClient
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
-import reactor.netty.transport.logging.AdvancedByteBufFormat
 
 @AutoConfiguration
 class SlackAutoConfiguration {
-
     @Bean
     @ConditionalOnMissingBean(SlackClient::class)
-    fun slackClient(
-        restClientBuilder: RestClient.Builder,
-    ): SlackClient {
-        return SlackClient(restClientBuilder, null, null)
-    }
+    fun slackClient(restClientBuilder: RestClient.Builder): SlackClient = SlackClient(restClientBuilder, null, null)
 
     @Bean
     @ConditionalOnMissingBean(SlackPluginFactory::class)
@@ -47,8 +37,5 @@ class SlackAutoConfiguration {
         pluginService: PluginService,
         slackClient: SlackClient,
         storageService: TemporaryResourceStorageService,
-    ): SlackPluginFactory {
-        return SlackPluginFactory(pluginService, slackClient, storageService)
-    }
-
+    ): SlackPluginFactory = SlackPluginFactory(pluginService, slackClient, storageService)
 }
