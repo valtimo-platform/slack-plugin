@@ -6,7 +6,7 @@
             "type": "htmlelement",
             "input": false,
             "label": "Instructions",
-            "content": "Start a new example case. The Slack plugin will call a Time API during execution.",
+            "content": "Start a new example case.",
             "tableView": false,
             "refreshOnChange": false
         },

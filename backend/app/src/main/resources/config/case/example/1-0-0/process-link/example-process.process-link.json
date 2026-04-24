@@ -6,14 +6,14 @@
         "formDefinitionName": "start-form-example"
     },
     {
-        "activityId": "slack-action",
+        "activityId": "slack-post-message",
         "activityType": "bpmn:ServiceTask:start",
         "processLinkType": "plugin",
-        "pluginDefinitionKey": "slack",
-        "pluginActionDefinitionKey": "slack-action",
+        "pluginActionDefinitionKey": "post-message",
         "pluginConfigurationId": "4ac9a49f-4aeb-4f91-86d9-853fd95a1b33",
         "actionProperties": {
-            "message": "Hello from the slack plugin!"
+            "channel": "valtimo-data",
+            "message": "Hello World!"
         }
     }
 ]

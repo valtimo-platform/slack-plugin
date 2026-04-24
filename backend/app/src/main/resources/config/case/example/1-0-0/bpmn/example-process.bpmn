@@ -15,19 +15,15 @@
         <bpmn:startEvent id="start-event" name="Process started">
             <bpmn:outgoing>Flow_1</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:serviceTask id="time-api-sample-action" name="Call Time API via sample plugin">
+        <bpmn:serviceTask id="slack-post-message" name="Post Slack message">
             <bpmn:incoming>Flow_1</bpmn:incoming>
             <bpmn:outgoing>Flow_2</bpmn:outgoing>
         </bpmn:serviceTask>
         <bpmn:endEvent id="end-event" name="Process ended">
-            <bpmn:extensionElements>
-                <camunda:executionListener expression="${valueResolverDelegateService.handleValue(execution, 'doc:/apiResult', execution.getVariable('apiResult'))}" event="start"/>
-                <camunda:executionListener expression="${valueResolverDelegateService.handleValue(execution, 'doc:/message', execution.getVariable('message'))}" event="start"/>
-            </bpmn:extensionElements>
             <bpmn:incoming>Flow_2</bpmn:incoming>
         </bpmn:endEvent>
-        <bpmn:sequenceFlow id="Flow_1" sourceRef="start-event" targetRef="time-api-sample-action"/>
-        <bpmn:sequenceFlow id="Flow_2" sourceRef="time-api-sample-action" targetRef="end-event"/>
+        <bpmn:sequenceFlow id="Flow_1" sourceRef="start-event" targetRef="slack-post-message"/>
+        <bpmn:sequenceFlow id="Flow_2" sourceRef="slack-post-message" targetRef="end-event"/>
     </bpmn:process>
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
         <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
@@ -40,7 +36,7 @@
                     <dc:Bounds x="214" y="225" width="73" height="14"/>
                 </bpmndi:BPMNLabel>
             </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="ServiceTask_1_di" bpmnElement="time-api-sample-action">
+            <bpmndi:BPMNShape id="ServiceTask_1_di" bpmnElement="slack-post-message">
                 <dc:Bounds x="370" y="160" width="100" height="80"/>
             </bpmndi:BPMNShape>
             <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="end-event">
