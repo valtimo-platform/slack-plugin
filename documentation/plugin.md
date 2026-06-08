@@ -25,7 +25,7 @@ The following Gradle dependency can be added to your `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.ritense.valtimoplugins:slack:5.0.0")
+    implementation("com.ritense.valtimoplugins:slack:6.0.0")
 }
 ```
 
@@ -38,7 +38,7 @@ The following dependency can be added to your `package.json` file:
 ```json
 {
   "dependencies": {
-    "@valtimo-plugins/slack": "5.0.1"
+    "@valtimo-plugins/slack": "6.0.0"
   }
 }
 ```

@@ -10,7 +10,7 @@
         "activityType": "bpmn:ServiceTask:start",
         "processLinkType": "plugin",
         "pluginActionDefinitionKey": "post-message",
-        "pluginConfigurationId": "4ac9a49f-4aeb-4f91-86d9-853fd95a1b33",
+        "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
         "actionProperties": {
             "channel": "valtimo-data",
             "message": "Hello World!"
