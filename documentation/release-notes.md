@@ -2,6 +2,10 @@
 
 Overzicht van wijzigingen per versie van de Slack-plugin.
 
+## 6.0.1
+
+Valtimo bijgewerkt naar versie 13.41.0.
+
 ## 6.0.0
 Ondergebracht in een eigen repository met voorbeeldapplicatie, aparte documentatie en een PR-checks workflow. Broncode gesynchroniseerd met de monorepo en ktlint-issues opgelost.
 
