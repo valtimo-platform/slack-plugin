@@ -96,9 +96,17 @@ centralPortalPlus {
 
 if (signingConfigSet) {
     signing {
-        def signingKeyBase64 = System.getenv("SIGNING_KEY")
-        def signingKeyBytes = signingKeyBase64.decodeBase64()
-        def signingKey = new String(signingKeyBytes, "UTF-8")
+        def rawSigningKey = System.getenv("SIGNING_KEY")
+        // The SIGNING_KEY secret may be provided either as an ASCII-armored PGP key directly, or as a
+        // base64-encoded armored key. Base64 produced by tools such as `base64`/`gpg --export` is often
+        // line-wrapped, and Groovy's decodeBase64() rejects whitespace with "bad character in base64 value".
+        // Detect an already-armored key and otherwise strip whitespace before decoding.
+        def signingKey
+        if (rawSigningKey.contains("-----BEGIN")) {
+            signingKey = rawSigningKey
+        } else {
+            signingKey = new String(rawSigningKey.replaceAll("\\s", "").decodeBase64(), "UTF-8")
+        }
         def signingKeyPassword = System.getenv('SIGNING_KEY_PASSWORD')
 
         useInMemoryPgpKeys(signingKey, signingKeyPassword)
