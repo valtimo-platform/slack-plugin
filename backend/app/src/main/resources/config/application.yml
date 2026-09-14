@@ -82,6 +82,10 @@ valtimo:
         - localhost
   plugin:
     encryption-secret: "abcdefghijklmnop"
+  slack:
+    # Far more often than the five-minute default, so a message typed into the fake Slack UI
+    # (http://localhost:8082) becomes a case while you are still looking at it.
+    poll-cron: "*/15 * * * * *"
   docker:
     filter:
       enabled: true

@@ -1,0 +1,7 @@
+[
+    {
+        "processDefinitionKey": "slack-conversation-process",
+        "canInitializeDocument": true,
+        "startableByUser": false
+    }
+]

@@ -17,6 +17,7 @@
 val kotlinLoggingVersion: String by project
 val okhttpVersion: String by project
 val mockitoKotlinVersion: String by project
+val operatonVersion: String by project
 
 dockerCompose {
     setProjectName("slack")
@@ -28,16 +29,30 @@ dockerCompose {
 }
 
 dependencies {
+    compileOnly("com.ritense.valtimo:authorization")
+    compileOnly("com.ritense.valtimo:case")
+    compileOnly("com.ritense.valtimo:contract")
     compileOnly("com.ritense.valtimo:core")
     compileOnly("com.ritense.valtimo:plugin-valtimo")
+    compileOnly("com.ritense.valtimo:process-document")
     compileOnly("com.ritense.valtimo:temporary-resource-storage")
     compileOnly("com.ritense.valtimo:value-resolver")
+    compileOnly("org.operaton.bpm:operaton-engine:$operatonVersion")
 
     compileOnly("org.springframework.boot:spring-boot-starter-webflux")
+    compileOnly("org.springframework.boot:spring-boot-autoconfigure")
+    compileOnly("org.springframework.boot:spring-boot-starter-data-jpa")
 
+    // For @SchedulerLock on the poller. compileOnly like the Valtimo modules: a Valtimo
+    // application already has ShedLock on its classpath, because core's
+    // SchedulerAutoConfiguration builds the JdbcTemplateLockProvider the annotation needs.
+    compileOnly("net.javacrumbs.shedlock:shedlock-spring")
+
+    compileOnly("com.fasterxml.jackson.core:jackson-databind")
     compileOnly("io.github.oshai:kotlin-logging-jvm:$kotlinLoggingVersion")
 
     // Testing
+    testImplementation("com.ritense.valtimo:authorization")
     testImplementation("com.ritense.valtimo:building-block")
     testImplementation("com.ritense.valtimo:contract")
     testImplementation("com.ritense.valtimo:core")
@@ -45,6 +60,7 @@ dependencies {
     testImplementation("com.ritense.valtimo:temporary-resource-storage")
     testImplementation("com.ritense.valtimo:test-utils-common")
 
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     testImplementation("org.postgresql:postgresql")

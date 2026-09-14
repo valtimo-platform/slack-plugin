@@ -4,8 +4,12 @@
     "title": "Slack configuration (Autodeployed)",
     "pluginDefinitionKey": "slack",
     "properties": {
-      "url": "https://www.slack.com/",
-      "token": "xoxb-fake-token"
+      "url": "http://localhost:8082/",
+      "token": "xoxb-sandbox-token",
+      "messagesPerPage": 20,
+      "maxPagesPerPoll": 5,
+      "maxThreadsPerPoll": 10,
+      "initialLookbackMinutes": 60
     }
   }
 ]

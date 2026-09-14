@@ -1,0 +1,48 @@
+[
+    {
+        "activityId": "slack-message-received",
+        "activityType": "bpmn:MessageStartEvent:start",
+        "processLinkType": "plugin",
+        "pluginActionDefinitionKey": "receive-message",
+        "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
+        "actionProperties": {
+            "channel": "C01SANDBOX",
+            "threadScope": "THREAD_STARTS_ONLY"
+        }
+    },
+    {
+        "activityId": "slack-acknowledge",
+        "activityType": "bpmn:ServiceTask:start",
+        "processLinkType": "plugin",
+        "pluginActionDefinitionKey": "post-message",
+        "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
+        "actionProperties": {
+            "channel": "pv:slackChannel",
+            "message": "Thanks, we picked this up as a case. What is it about?",
+            "threadTs": "pv:slackThreadTs"
+        }
+    },
+    {
+        "activityId": "slack-await-reply",
+        "activityType": "bpmn:ReceiveTask:end",
+        "processLinkType": "plugin",
+        "pluginActionDefinitionKey": "receive-message",
+        "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
+        "actionProperties": {
+            "channel": "C01SANDBOX",
+            "threadScope": "THREAD_REPLIES_ONLY"
+        }
+    },
+    {
+        "activityId": "slack-confirm",
+        "activityType": "bpmn:ServiceTask:start",
+        "processLinkType": "plugin",
+        "pluginActionDefinitionKey": "post-message",
+        "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
+        "actionProperties": {
+            "channel": "pv:slackChannel",
+            "message": "Got it, we will take it from here.",
+            "threadTs": "pv:slackThreadTs"
+        }
+    }
+]
