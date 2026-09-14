@@ -1,0 +1,12 @@
+{
+    "$id": "slack-conversation.schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Slack Conversation",
+    "type": "object",
+    "properties": {
+        "note": {
+            "type": "string",
+            "description": "Free text. The Slack message itself arrives as process variables (slackChannel, slackThreadTs, slackMessageText, ...), not as document content, so this case is created empty."
+        }
+    }
+}

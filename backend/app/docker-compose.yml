@@ -54,6 +54,31 @@ services:
     volumes:
       - plugin-database-data:/var/lib/postgres # persist data even if container shuts down
 
+  # Stands in for the Slack Web API, so the sandbox needs no workspace, app or token. Posting
+  # writes into it and its web UI (http://localhost:8082) is where you type the messages the
+  # poller turns into cases. See imports/slack-mock/fake_slack.py.
+  plugin-slack-mock:
+    container_name: plugin-docker-compose-plugin-slack-mock
+    image: python:3.13-alpine
+    ports:
+      - "8082:8080"
+    environment:
+      # Must match the token in config/plugin/slack.pluginconfig.json — the mock rejects
+      # anything else, the way Slack does, so a fixture that drifts fails visibly.
+      SLACK_MOCK_TOKEN: xoxb-sandbox-token
+      SLACK_MOCK_CHANNELS: "C01SANDBOX:sandbox"
+    volumes:
+      - ./imports/slack-mock:/srv:ro
+    command: [ "python", "-u", "/srv/fake_slack.py" ]
+    healthcheck:
+      # 127.0.0.1 rather than localhost: the server listens on IPv4 only, and busybox wget
+      # resolves localhost to ::1 first.
+      test: [ "CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/_fake/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 2s
+
   plugin-rabbitmq:
     image: rabbitmq:4.1.0-management
     container_name: plugin-docker-compose-plugin-rabbitmq

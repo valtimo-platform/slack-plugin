@@ -1,0 +1,8 @@
+{
+    "key": "slack-conversation",
+    "name": "Slack Conversation",
+    "versionTag": "1.0.0",
+    "final": false,
+    "canHaveAssignee": true,
+    "autoAssignTasks": true
+}

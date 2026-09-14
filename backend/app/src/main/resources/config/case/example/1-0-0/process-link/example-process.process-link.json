@@ -12,7 +12,7 @@
         "pluginActionDefinitionKey": "post-message",
         "pluginConfigurationId": "8661ca7e-9ae7-4688-90be-68c3ca828de1",
         "actionProperties": {
-            "channel": "valtimo-data",
+            "channel": "C01SANDBOX",
             "message": "Hello World!"
         }
     }

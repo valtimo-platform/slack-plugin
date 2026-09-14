@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_slack_conversation"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.39.0">
+    <bpmn:collaboration id="Collaboration_slack_conversation">
+        <bpmn:participant id="slack-conversation-participant" name="Slack Conversation"
+                          processRef="slack-conversation-process"/>
+    </bpmn:collaboration>
+    <bpmn:message id="Message_slack_message_received" name="SlackMessageReceived"/>
+    <bpmn:process id="slack-conversation-process" name="Slack Conversation" isExecutable="true">
+        <!--
+            Started by the `receive-message` action: a message posted in the channel creates a
+            case, and the message start event is what tells the plugin to start something new
+            rather than resume something waiting.
+        -->
+        <bpmn:startEvent id="slack-message-received" name="Message posted in Slack">
+            <bpmn:outgoing>Flow_1</bpmn:outgoing>
+            <bpmn:messageEventDefinition id="MessageEventDefinition_1" messageRef="Message_slack_message_received"/>
+        </bpmn:startEvent>
+        <bpmn:serviceTask id="slack-acknowledge" name="Answer in the thread">
+            <bpmn:incoming>Flow_1</bpmn:incoming>
+            <bpmn:outgoing>Flow_2</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <!--
+            Parked here until somebody answers in that same thread. The `receive-message` link
+            on this task is filtered to thread replies, so the case is resumed by the answer to
+            its own question and by nothing else.
+        -->
+        <bpmn:receiveTask id="slack-await-reply" name="Wait for a reply">
+            <bpmn:incoming>Flow_2</bpmn:incoming>
+            <bpmn:outgoing>Flow_3</bpmn:outgoing>
+        </bpmn:receiveTask>
+        <bpmn:serviceTask id="slack-confirm" name="Confirm the reply">
+            <bpmn:incoming>Flow_3</bpmn:incoming>
+            <bpmn:outgoing>Flow_4</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:endEvent id="slack-conversation-ended" name="Conversation handled">
+            <bpmn:incoming>Flow_4</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_1" sourceRef="slack-message-received" targetRef="slack-acknowledge"/>
+        <bpmn:sequenceFlow id="Flow_2" sourceRef="slack-acknowledge" targetRef="slack-await-reply"/>
+        <bpmn:sequenceFlow id="Flow_3" sourceRef="slack-await-reply" targetRef="slack-confirm"/>
+        <bpmn:sequenceFlow id="Flow_4" sourceRef="slack-confirm" targetRef="slack-conversation-ended"/>
+    </bpmn:process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_slack_conversation">
+        <bpmndi:BPMNPlane id="BPMNPlane_slack_conversation" bpmnElement="Collaboration_slack_conversation">
+            <bpmndi:BPMNShape id="Participant_slack_conversation_di" bpmnElement="slack-conversation-participant"
+                              isHorizontal="true">
+                <dc:Bounds x="160" y="100" width="860" height="200"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="slack-message-received_di" bpmnElement="slack-message-received">
+                <dc:Bounds x="232" y="182" width="36" height="36"/>
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="209" y="225" width="83" height="27"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="slack-acknowledge_di" bpmnElement="slack-acknowledge">
+                <dc:Bounds x="330" y="160" width="100" height="80"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="slack-await-reply_di" bpmnElement="slack-await-reply">
+                <dc:Bounds x="490" y="160" width="100" height="80"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="slack-confirm_di" bpmnElement="slack-confirm">
+                <dc:Bounds x="650" y="160" width="100" height="80"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="slack-conversation-ended_di" bpmnElement="slack-conversation-ended">
+                <dc:Bounds x="832" y="182" width="36" height="36"/>
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="807" y="225" width="88" height="27"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+                <di:waypoint x="268" y="200"/>
+                <di:waypoint x="330" y="200"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+                <di:waypoint x="430" y="200"/>
+                <di:waypoint x="490" y="200"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+                <di:waypoint x="590" y="200"/>
+                <di:waypoint x="650" y="200"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+                <di:waypoint x="750" y="200"/>
+                <di:waypoint x="832" y="200"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</bpmn:definitions>
