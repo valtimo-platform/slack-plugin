@@ -2,6 +2,11 @@
 
 Overzicht van wijzigingen per versie van de Slack-plugin.
 
+## 6.1.1
+
+Een dossier dat door een binnenkomend Slack-bericht wordt gestart, toont nu de gegevens van dat
+bericht in plaats van leeg te blijven.
+
 ## 6.1.0
 
 Nieuwe actie `receive-message`: een Slack-kanaal uitlezen en per bericht een dossier starten,
