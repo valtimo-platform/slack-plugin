@@ -17,10 +17,19 @@
 package com.ritense.valtimoplugins.slack.service
 
 import com.ritense.case.service.CaseDefinitionService
+import com.ritense.case_.domain.definition.CaseDefinition
+import com.ritense.document.domain.Document
+import com.ritense.document.domain.impl.JsonSchemaDocumentId
+import com.ritense.document.service.DocumentService
+import com.ritense.document.service.result.CreateDocumentResult
 import com.ritense.plugin.domain.PluginProcessLink
+import com.ritense.processdocument.domain.ProcessDefinitionCaseDefinition
+import com.ritense.processdocument.domain.ProcessDefinitionCaseDefinitionId
+import com.ritense.processdocument.domain.ProcessDefinitionId
 import com.ritense.processdocument.service.ProcessDefinitionCaseDefinitionService
-import com.ritense.processdocument.service.ProcessDocumentService
+import com.ritense.processdocument.service.ProcessDocumentAssociationService
 import com.ritense.processlink.domain.ActivityTypeWithEventName
+import com.ritense.valtimo.contract.case_.CaseDefinitionId
 import com.ritense.valtimo.service.ProcessPropertyService
 import com.ritense.valtimoplugins.slack.BaseTest
 import com.ritense.valtimoplugins.slack.domain.SlackMessage
@@ -29,6 +38,7 @@ import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -36,26 +46,50 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.operaton.bpm.engine.RepositoryService
 import org.operaton.bpm.engine.RuntimeService
+import org.operaton.bpm.engine.repository.ProcessDefinition
 import org.operaton.bpm.engine.runtime.Execution
 import org.operaton.bpm.engine.runtime.ExecutionQuery
+import org.operaton.bpm.engine.runtime.MessageCorrelationBuilder
+import org.operaton.bpm.engine.runtime.ProcessInstance
+import org.operaton.bpm.model.bpmn.BpmnModelInstance
+import org.operaton.bpm.model.bpmn.instance.CatchEvent
+import org.operaton.bpm.model.bpmn.instance.Message
+import org.operaton.bpm.model.bpmn.instance.MessageEventDefinition
+import org.semver4j.Semver
+import java.util.Optional
+import java.util.UUID
 
 /**
- * Covers the reply side of the starter: which of the instances parked at a receive task a
- * given Slack message may resume.
+ * Covers both sides of the starter: where a case is started when the link hangs on a message
+ * start event, and which of the instances parked at a receive task a given Slack message may
+ * resume.
  *
- * The broadcast this guards against is not a hypothetical. The execution query is scoped to
- * a process definition and an activity, not to a case, so without correlation every case
- * waiting for its own answer would be handed the first message that arrived for any of them.
+ * The broadcast the resume side guards against is not a hypothetical. The execution query is
+ * scoped to a process definition and an activity, not to a case, so without correlation every
+ * case waiting for its own answer would be handed the first message that arrived for any of
+ * them.
  */
 class SlackMessageProcessStarterTest : BaseTest() {
     private lateinit var runtimeService: RuntimeService
     private lateinit var executionQuery: ExecutionQuery
+    private lateinit var repositoryService: RepositoryService
+    private lateinit var processPropertyService: ProcessPropertyService
+    private lateinit var processDefinitionCaseDefinitionService: ProcessDefinitionCaseDefinitionService
+    private lateinit var documentService: DocumentService
+    private lateinit var processDocumentAssociationService: ProcessDocumentAssociationService
+    private lateinit var caseDefinitionService: CaseDefinitionService
     private lateinit var starter: SlackMessageProcessStarter
 
     @BeforeEach
     fun setUp() {
         runtimeService = mock()
         executionQuery = mock()
+        repositoryService = mock()
+        processPropertyService = mock()
+        processDefinitionCaseDefinitionService = mock()
+        documentService = mock()
+        processDocumentAssociationService = mock()
+        caseDefinitionService = mock()
 
         whenever(runtimeService.createExecutionQuery()).thenReturn(executionQuery)
         whenever(executionQuery.processDefinitionId(any())).thenReturn(executionQuery)
@@ -64,12 +98,59 @@ class SlackMessageProcessStarterTest : BaseTest() {
         starter =
             SlackMessageProcessStarter(
                 runtimeService,
-                mock<RepositoryService>(),
-                mock<ProcessPropertyService>(),
-                mock<ProcessDefinitionCaseDefinitionService>(),
-                mock<ProcessDocumentService>(),
-                mock<CaseDefinitionService>(),
+                repositoryService,
+                processPropertyService,
+                processDefinitionCaseDefinitionService,
+                documentService,
+                processDocumentAssociationService,
+                caseDefinitionService,
             )
+    }
+
+    /**
+     * The regression this guards against: starting the process by its definition key instead.
+     *
+     * A process may have more than one start event - a plain one for the start form and this
+     * message start event for the channel - and Operaton enters a process started by key at
+     * whichever it considers the initial activity, which is the plain one. The message's own
+     * start event then never runs, so neither do the execution listeners that put the message on
+     * the case, and the case is created empty.
+     */
+    @Test
+    fun `should start a case by correlating the start message of the linked element`() {
+        val link = messageStartEvent()
+        val documentId = JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555"))
+        givenACaseCanBeStartedFor(link, documentId)
+        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", "process-instance-1")
+
+        val started = starter.start(link, reply(threadTs = null))
+
+        assertThat(started).isTrue()
+        verify(correlation).processDefinitionId("Verwerk_slackbericht_handmatig:1:abc")
+        // Valtimo resolves `doc:` through the business key until the association below exists,
+        // so the start event's own listeners depend on it being the document id.
+        verify(correlation).processInstanceBusinessKey(documentId.toString())
+        verify(correlation).correlateStartMessage()
+        verify(processDocumentAssociationService).createProcessDocumentInstance(
+            eq("process-instance-1"),
+            eq(UUID.fromString("11111111-2222-3333-4444-555555555555")),
+            eq("Verwerk slackbericht handmatig"),
+        )
+    }
+
+    @Test
+    fun `should hand the message on as process variables when it starts a case`() {
+        val link = messageStartEvent()
+        givenACaseCanBeStartedFor(
+            link,
+            JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555")),
+        )
+        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", "process-instance-1")
+        val message = reply(threadTs = null)
+
+        starter.start(link, message)
+
+        verify(correlation).setVariables(message.toProcessVariables())
     }
 
     @Test
@@ -267,6 +348,84 @@ class SlackMessageProcessStarterTest : BaseTest() {
     ) {
         whenever(runtimeService.getVariable(processInstanceId, SlackMessage.MESSAGE_TS_VARIABLE))
             .thenReturn(messageTs)
+    }
+
+    private fun messageStartEvent(): PluginProcessLink =
+        mock<PluginProcessLink>().also {
+            whenever(it.activityType).thenReturn(ActivityTypeWithEventName.MESSAGE_START_EVENT_START)
+            whenever(it.activityId).thenReturn("Event_0beitek")
+            whenever(it.processDefinitionId).thenReturn("Verwerk_slackbericht_handmatig:1:abc")
+        }
+
+    /**
+     * Everything between "this link points at a message start event" and "a case may be created
+     * for it": the process is not a system process, it belongs to the active version of a case
+     * definition that allows document initialisation, and the document itself is created.
+     */
+    private fun givenACaseCanBeStartedFor(
+        link: PluginProcessLink,
+        documentId: JsonSchemaDocumentId,
+    ) {
+        // Real objects rather than mocks: these are plain JPA entities whose `val`s Mockito
+        // cannot stub, and building them is no more code than stubbing them would be.
+        val caseDefinitionId = CaseDefinitionId("slackverwerking", Semver("1.1.0"))
+        val processDefinitionCaseDefinition =
+            ProcessDefinitionCaseDefinition(
+                ProcessDefinitionCaseDefinitionId(
+                    ProcessDefinitionId(link.processDefinitionId),
+                    caseDefinitionId,
+                ),
+                canInitializeDocument = true,
+            )
+        val caseDefinition =
+            CaseDefinition(
+                id = caseDefinitionId,
+                name = "Slackverwerking",
+                createdDate = null,
+                canHaveAssignee = true,
+            )
+
+        // Each mock is finished before the next stubbing starts; stubbing one inside another
+        // `thenReturn(...)` is what Mockito reports as unfinished stubbing.
+        val document = mock<Document>()
+        whenever(document.id()).thenReturn(documentId)
+        val createResult = mock<CreateDocumentResult>()
+        doReturn(Optional.of(document)).whenever(createResult).resultingDocument()
+        val processDefinition = mock<ProcessDefinition>()
+        whenever(processDefinition.name).thenReturn("Verwerk slackbericht handmatig")
+
+        whenever(processPropertyService.isSystemProcessById(link.processDefinitionId)).thenReturn(false)
+        whenever(processDefinitionCaseDefinitionService.findByProcessDefinitionId(any()))
+            .thenReturn(processDefinitionCaseDefinition)
+        whenever(caseDefinitionService.getActiveCaseDefinition("slackverwerking")).thenReturn(caseDefinition)
+        whenever(documentService.createDocument(any())).thenReturn(createResult)
+        whenever(repositoryService.getProcessDefinition(link.processDefinitionId)).thenReturn(processDefinition)
+    }
+
+    /** Stubs the BPMN lookup of the message name and the correlation builder chain. */
+    private fun givenStartMessageCorrelates(
+        messageName: String,
+        processInstanceId: String,
+    ): MessageCorrelationBuilder {
+        val message = mock<Message>()
+        whenever(message.name).thenReturn(messageName)
+        val messageEventDefinition = mock<MessageEventDefinition>()
+        whenever(messageEventDefinition.message).thenReturn(message)
+        val catchEvent = mock<CatchEvent>()
+        whenever(catchEvent.eventDefinitions).thenReturn(listOf(messageEventDefinition))
+        val model = mock<BpmnModelInstance>()
+        doReturn(catchEvent).whenever(model).getModelElementById<CatchEvent>(any())
+        whenever(repositoryService.getBpmnModelInstance(any())).thenReturn(model)
+
+        val processInstance = mock<ProcessInstance>()
+        whenever(processInstance.id).thenReturn(processInstanceId)
+        val correlation = mock<MessageCorrelationBuilder>()
+        whenever(runtimeService.createMessageCorrelation(messageName)).thenReturn(correlation)
+        whenever(correlation.processDefinitionId(any())).thenReturn(correlation)
+        whenever(correlation.processInstanceBusinessKey(any())).thenReturn(correlation)
+        whenever(correlation.setVariables(any())).thenReturn(correlation)
+        whenever(correlation.correlateStartMessage()).thenReturn(processInstance)
+        return correlation
     }
 
     private fun receiveTask(): PluginProcessLink =
