@@ -2,6 +2,10 @@
 
 Overzicht van wijzigingen per versie van de Slack-plugin.
 
+## 6.1.2
+
+Ondersteuning voor Valtimo 13.48.0.
+
 ## 6.1.1
 
 Een dossier dat door een binnenkomend Slack-bericht wordt gestart, toont nu de gegevens van dat
