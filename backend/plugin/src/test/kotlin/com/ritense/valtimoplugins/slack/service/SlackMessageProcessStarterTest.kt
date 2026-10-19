@@ -26,6 +26,7 @@ import com.ritense.plugin.domain.PluginProcessLink
 import com.ritense.processdocument.domain.ProcessDefinitionCaseDefinition
 import com.ritense.processdocument.domain.ProcessDefinitionCaseDefinitionId
 import com.ritense.processdocument.domain.ProcessDefinitionId
+import com.ritense.processdocument.domain.ProcessDocumentInstance
 import com.ritense.processdocument.service.ProcessDefinitionCaseDefinitionService
 import com.ritense.processdocument.service.ProcessDocumentAssociationService
 import com.ritense.processlink.domain.ActivityTypeWithEventName
@@ -47,6 +48,7 @@ import org.mockito.kotlin.whenever
 import org.operaton.bpm.engine.RepositoryService
 import org.operaton.bpm.engine.RuntimeService
 import org.operaton.bpm.engine.repository.ProcessDefinition
+import org.operaton.bpm.engine.repository.ProcessDefinitionQuery
 import org.operaton.bpm.engine.runtime.Execution
 import org.operaton.bpm.engine.runtime.ExecutionQuery
 import org.operaton.bpm.engine.runtime.MessageCorrelationBuilder
@@ -121,7 +123,7 @@ class SlackMessageProcessStarterTest : BaseTest() {
         val link = messageStartEvent()
         val documentId = JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555"))
         givenACaseCanBeStartedFor(link, documentId)
-        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", "process-instance-1")
+        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", PROCESS_INSTANCE_ID)
 
         val started = starter.start(link, reply(threadTs = null))
 
@@ -132,7 +134,7 @@ class SlackMessageProcessStarterTest : BaseTest() {
         verify(correlation).processInstanceBusinessKey(documentId.toString())
         verify(correlation).correlateStartMessage()
         verify(processDocumentAssociationService).createProcessDocumentInstance(
-            eq("process-instance-1"),
+            eq(PROCESS_INSTANCE_ID),
             eq(UUID.fromString("11111111-2222-3333-4444-555555555555")),
             eq("Verwerk slackbericht handmatig"),
         )
@@ -145,12 +147,78 @@ class SlackMessageProcessStarterTest : BaseTest() {
             link,
             JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555")),
         )
-        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", "process-instance-1")
+        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", PROCESS_INSTANCE_ID)
         val message = reply(threadTs = null)
 
         starter.start(link, message)
 
         verify(correlation).setVariables(message.toProcessVariables())
+    }
+
+    @Test
+    fun `should leave an association Valtimo already made at the start event alone`() {
+        // Valtimo's start event listener associates the instance itself, possibly with another
+        // document (a building block's). Creating one regardless throws on that.
+        val link = messageStartEvent()
+        givenACaseCanBeStartedFor(
+            link,
+            JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555")),
+        )
+        givenStartMessageCorrelates("IncomingSlackMessage", PROCESS_INSTANCE_ID)
+        doReturn(Optional.of(mock<ProcessDocumentInstance>()))
+            .whenever(processDocumentAssociationService)
+            .findProcessDocumentInstance(any())
+
+        assertThat(starter.start(link, reply(threadTs = null))).isTrue()
+        verify(processDocumentAssociationService, never()).createProcessDocumentInstance(any(), any(), any())
+    }
+
+    @Test
+    fun `should skip a case process that may not initialise a document instead of failing`() {
+        // Failing would roll back the claim and hold the channel cursor at this message, so
+        // every later poll would fail on it again - for a setting that does not change.
+        val link = messageStartEvent()
+        givenACaseCanBeStartedFor(
+            link,
+            JsonSchemaDocumentId.existingId(UUID.fromString("11111111-2222-3333-4444-555555555555")),
+            canInitializeDocument = false,
+        )
+
+        assertThat(starter.start(link, reply(threadTs = null))).isFalse()
+        verify(documentService, never()).createDocument(any())
+        verify(runtimeService, never()).createMessageCorrelation(any())
+    }
+
+    @Test
+    fun `should skip a process that is linked to no case definition`() {
+        // An earlier version of a case process, detached when a newer one was deployed.
+        val link = messageStartEvent()
+        whenever(processPropertyService.isSystemProcessById(link.processDefinitionId)).thenReturn(false)
+
+        assertThat(starter.start(link, reply(threadTs = null))).isFalse()
+        verify(documentService, never()).createDocument(any())
+    }
+
+    @Test
+    fun `should start the latest version of a system process`() {
+        val link = systemProcessStartEvent("slack-intake:2:def")
+        givenLatestVersionOf("slack-intake", "slack-intake:2:def")
+        val correlation = givenStartMessageCorrelates("IncomingSlackMessage", PROCESS_INSTANCE_ID)
+
+        assertThat(starter.start(link, reply(threadTs = null))).isTrue()
+        verify(correlation).processDefinitionId("slack-intake:2:def")
+        verify(correlation).correlateStartMessage()
+    }
+
+    @Test
+    fun `should not start an earlier version of a system process`() {
+        // Valtimo copies the link onto every new version and the old one keeps its own, so
+        // without this one message would start an instance of every version ever deployed.
+        val link = systemProcessStartEvent("slack-intake:1:abc")
+        givenLatestVersionOf("slack-intake", "slack-intake:2:def")
+
+        assertThat(starter.start(link, reply(threadTs = null))).isFalse()
+        verify(runtimeService, never()).createMessageCorrelation(any())
     }
 
     @Test
@@ -357,6 +425,30 @@ class SlackMessageProcessStarterTest : BaseTest() {
             whenever(it.processDefinitionId).thenReturn("Verwerk_slackbericht_handmatig:1:abc")
         }
 
+    private fun systemProcessStartEvent(processDefinitionId: String): PluginProcessLink =
+        mock<PluginProcessLink>().also {
+            whenever(it.activityType).thenReturn(ActivityTypeWithEventName.MESSAGE_START_EVENT_START)
+            whenever(it.activityId).thenReturn("Event_0beitek")
+            whenever(it.processDefinitionId).thenReturn(processDefinitionId)
+            whenever(processPropertyService.isSystemProcessById(processDefinitionId)).thenReturn(true)
+        }
+
+    private fun givenLatestVersionOf(
+        key: String,
+        latestProcessDefinitionId: String,
+    ) {
+        val linked = mock<ProcessDefinition>()
+        whenever(linked.key).thenReturn(key)
+        val latest = mock<ProcessDefinition>()
+        whenever(latest.id).thenReturn(latestProcessDefinitionId)
+        val query = mock<ProcessDefinitionQuery>()
+        whenever(query.processDefinitionKey(key)).thenReturn(query)
+        whenever(query.latestVersion()).thenReturn(query)
+        whenever(query.list()).thenReturn(listOf(latest))
+        whenever(repositoryService.getProcessDefinition(any())).thenReturn(linked)
+        whenever(repositoryService.createProcessDefinitionQuery()).thenReturn(query)
+    }
+
     /**
      * Everything between "this link points at a message start event" and "a case may be created
      * for it": the process is not a system process, it belongs to the active version of a case
@@ -365,6 +457,7 @@ class SlackMessageProcessStarterTest : BaseTest() {
     private fun givenACaseCanBeStartedFor(
         link: PluginProcessLink,
         documentId: JsonSchemaDocumentId,
+        canInitializeDocument: Boolean = true,
     ) {
         // Real objects rather than mocks: these are plain JPA entities whose `val`s Mockito
         // cannot stub, and building them is no more code than stubbing them would be.
@@ -375,7 +468,7 @@ class SlackMessageProcessStarterTest : BaseTest() {
                     ProcessDefinitionId(link.processDefinitionId),
                     caseDefinitionId,
                 ),
-                canInitializeDocument = true,
+                canInitializeDocument = canInitializeDocument,
             )
         val caseDefinition =
             CaseDefinition(
@@ -395,7 +488,7 @@ class SlackMessageProcessStarterTest : BaseTest() {
         whenever(processDefinition.name).thenReturn("Verwerk slackbericht handmatig")
 
         whenever(processPropertyService.isSystemProcessById(link.processDefinitionId)).thenReturn(false)
-        whenever(processDefinitionCaseDefinitionService.findByProcessDefinitionId(any()))
+        whenever(processDefinitionCaseDefinitionService.findByProcessDefinitionIdOrNull(any()))
             .thenReturn(processDefinitionCaseDefinition)
         whenever(caseDefinitionService.getActiveCaseDefinition("slackverwerking")).thenReturn(caseDefinition)
         whenever(documentService.createDocument(any())).thenReturn(createResult)
@@ -447,5 +540,6 @@ class SlackMessageProcessStarterTest : BaseTest() {
 
     private companion object {
         private const val CHANNEL = "C012AB3CD"
+        private const val PROCESS_INSTANCE_ID = "99999999-8888-7777-6666-555555555555"
     }
 }
